@@ -1,6 +1,0 @@
-board:
-  name: my_board
-  full_name: My Boards example
-  vendor: Juan
-  socs:
-  - name: nrf52832
