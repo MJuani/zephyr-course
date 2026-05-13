@@ -1,0 +1,11 @@
+description: Our Sensor
+
+compatible: "our,sensor"
+
+include: [base.yaml, sensor-device.yaml]
+
+properties:
+  gpios:
+    type: phandle-array
+    required: true
+    description: Led Pin
