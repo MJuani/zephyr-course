@@ -1,0 +1,3 @@
+# Project root Kconfig
+source "Kconfig.zephyr"
+rsource "drivers/subsys/our_sensor/Kconfig"
