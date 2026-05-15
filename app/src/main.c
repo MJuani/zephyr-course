@@ -8,6 +8,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/drivers/sensor.h>
+#include "our_sensor.h"
 
 #define BLINK_TIME_ms		500
 
@@ -21,7 +22,13 @@ int main(void)
 		return 0;
 	}
 
-	printf("Hello World! %s\n", CONFIG_BOARD_TARGET);
+	LOG_INF("Hello World! %s\n", CONFIG_BOARD_TARGET);
+
+	const struct custom_sensor_api_extension *api = sensor_device->api;
+	
+	if(api->ext_api){
+		api->ext_api(sensor_device, 1024);
+	}
 
 	while(1){
 		sensor_sample_fetch(sensor_device);
