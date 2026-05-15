@@ -3,6 +3,8 @@
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/drivers/gpio.h>
 
+#include "our_sensor.h"
+
 #define DT_DRV_COMPAT our_sensor
 
 LOG_MODULE_REGISTER(our_sensor, CONFIG_SENSOR_LOG_LEVEL);
@@ -13,6 +15,7 @@ LOG_MODULE_REGISTER(our_sensor, CONFIG_SENSOR_LOG_LEVEL);
 
 struct our_sensor_data{
     int led_state;
+    uint32_t param;
 };
 
 struct our_sensor_config{
@@ -32,7 +35,6 @@ static int our_sensor_init (const struct device *dev){
 }
 
 static int our_sensor_sample_fetch(const struct device *dev, enum sensor_channel chan){
-// static int our_sensor_sample_fetch(const struct device *dev){
     const struct our_sensor_config *config = dev->config;
     struct our_sensor_data *data = dev->data;
     data->led_state = 1;
@@ -40,16 +42,28 @@ static int our_sensor_sample_fetch(const struct device *dev, enum sensor_channel
 }
 
 static int our_sensor_channel_get(const struct device *dev, enum sensor_channel chan, struct sensor_value *val){
-// static int our_sensor_channel_get(const struct device *dev){
     const struct our_sensor_config *config = dev->config;
     struct our_sensor_data *data = dev->data;
     data->led_state = 0;
     return gpio_pin_set_dt(&config->pin, 0);
 }
 
-static const struct sensor_driver_api our_sensor_api = {
-    .sample_fetch = &our_sensor_sample_fetch,
-    .channel_get = &our_sensor_channel_get,
+static int ext_api_impl(const struct device *dev, uint32_t new_val) {
+    
+    struct our_sensor_data *data = dev->data;
+    data->param = new_val;
+
+    LOG_INF("Saving new_val %d to data->param\r\n", data->param);
+
+    return 0;
+}
+
+static const struct custom_sensor_api_extension our_sensor_api = {
+    .common = {
+        .sample_fetch = our_sensor_sample_fetch,
+        .channel_get = our_sensor_channel_get,
+    },
+    .ext_api = ext_api_impl,
 };
 
 #define OUR_SENSOR_DEFINE(inst)                                  \
