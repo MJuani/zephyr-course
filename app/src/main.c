@@ -10,6 +10,8 @@
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/shell/shell.h>
 
+#include "our_sensor.h"
+
 #define BLINK_TIME_ms		500
 
 static const struct device *sensor_device = DEVICE_DT_GET_ANY(our_sensor);
@@ -49,6 +51,33 @@ static int cmd_sensor_read(const struct shell *sh, size_t argc, char** argv){
 	return 0;
 }
 
+static int cmd_sensor_ext_api (const struct shell *sh, size_t argc, char** argv){
+
+	uint16_t param = 0;
+
+	if(argc != 2){
+		shell_error(sh, "set: wrong parameter count");
+		return 0;
+	}
+
+	param = atoi(argv[1]);
+
+	if(param >= 2048){
+		shell_error(sh, "set: value must be below 2048");
+		return 0;
+	}
+
+	shell_print(sh, "calling sensor_extension_api with value %d", param);
+
+	const struct custom_sensor_api_extension *api = sensor_device->api;
+	
+	if(api->ext_api){
+		api->ext_api(sensor_device, param);
+	}	
+
+	return 0;
+}
+
 int main(void)
 {
 	if(!device_is_ready(sensor_device)){
@@ -56,6 +85,12 @@ int main(void)
 	}
 
 	LOG_INF("Hello World! %s\n", CONFIG_BOARD_TARGET);
+
+	const struct custom_sensor_api_extension *api = sensor_device->api;
+	
+	if(api->ext_api){
+		api->ext_api(sensor_device, 1024);
+	}
 
 	while(1){
 		k_msleep(BLINK_TIME_ms);
@@ -66,9 +101,10 @@ int main(void)
 
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	sensor_sub_cmds,
-	SHELL_CMD(fetch, NULL, "Calls sensor_sample_fetch", cmd_sensor_fetch),
-	SHELL_CMD(read,  NULL, "Calls sensor_channel_get",  cmd_sensor_read),
-	SHELL_CMD(info,  NULL, "Prints sensor name and state",  cmd_sensor_info),
+	SHELL_CMD		(fetch, NULL, "Calls sensor_sample_fetch", 		cmd_sensor_fetch),
+	SHELL_CMD		(read,  NULL, "Calls sensor_channel_get", 		cmd_sensor_read),
+	SHELL_CMD		(info,  NULL, "Prints sensor name and state",  	cmd_sensor_info),
+	SHELL_CMD_ARG 	(set,  	NULL, "Calls sensor_ext_api",		  	cmd_sensor_ext_api, 2, 0),
 	SHELL_SUBCMD_SET_END
 );
 
